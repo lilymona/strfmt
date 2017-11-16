@@ -16,7 +16,6 @@ package strfmt
 
 import (
 	"database/sql/driver"
-	"errors"
 	"fmt"
 	"regexp"
 	"time"
@@ -132,21 +131,16 @@ func (t *Date) UnmarshalEasyJSON(in *jlexer.Lexer) {
 	}
 }
 
-func (t *Date) GetBSON() (interface{}, error) {
-	return bson.M{"data": t.String()}, nil
+func (t Date) GetBSON() (interface{}, error) {
+	return time.Time(t), nil
 }
 
 func (t *Date) SetBSON(raw bson.Raw) error {
-	var m bson.M
+	var m time.Time
 	if err := raw.Unmarshal(&m); err != nil {
-		return err
+		return fmt.Errorf("couldn't unmarshal bson raw value as Date: %s", err)
 	}
 
-	if data, ok := m["data"].(string); ok {
-		rd, err := time.Parse(RFC3339FullDate, data)
-		*t = Date(rd)
-		return err
-	}
-
-	return errors.New("couldn't unmarshal bson raw value as Duration")
+	*t = Date(m)
+	return nil
 }

@@ -16,7 +16,6 @@ package strfmt
 
 import (
 	"database/sql/driver"
-	"errors"
 	"fmt"
 
 	"github.com/mailru/easyjson/jlexer"
@@ -105,20 +104,16 @@ func (id *ObjectId) UnmarshalEasyJSON(in *jlexer.Lexer) {
 	}
 }
 
-func (id *ObjectId) GetBSON() (interface{}, error) {
-	return bson.M{"data": bson.ObjectId(*id).Hex()}, nil
+func (id ObjectId) GetBSON() (interface{}, error) {
+	return bson.ObjectId(id), nil
 }
 
 func (id *ObjectId) SetBSON(raw bson.Raw) error {
-	var m bson.M
+	var m bson.ObjectId
 	if err := raw.Unmarshal(&m); err != nil {
-		return err
+		return fmt.Errorf("couldn't unmarshal bson raw value as ObjectId: %s", err)
 	}
 
-	if data, ok := m["data"].(string); ok {
-		*id = NewObjectId(data)
-		return nil
-	}
-
-	return errors.New("couldn't unmarshal bson raw value as ObjectId")
+	*id = ObjectId(m)
+	return nil
 }
